@@ -1,9 +1,10 @@
+import os
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# قائمة الأكواد المسموح بها
-valid_keys = {"7943A11C538582AB3DED6BF0343C275B45132F9D6F476568B3FA89460C0B6D98"}  # يمكنك تخزينها في قاعدة بيانات لاحقًا
+# قراءة الأكواد من متغير البيئة
+valid_keys = set(os.getenv("VALID_KEYS", "").split(","))
 
 @app.route("/verify", methods=["POST"])
 def verify_key():
