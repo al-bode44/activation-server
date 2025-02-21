@@ -1,55 +1,29 @@
 import os
 import hashlib
 import requests
-import winreg  # مكتبة التعامل مع الريجستري
 
-SERVER_URL = "http://127.0.0.1:5000/verify"
+SERVER_URL = "https://4dc1beb5-11ab-42f9-8ed1-1c4fa41037b5-00-2hb4o4xmha4tb.worf.replit.dev:8080/verify"
 REGISTRY_PATH = r"Software\MyTool"
 REGISTRY_KEY = "Activated"
-import uuid
-import hashlib
-import os
 
 def generate_activation_key():
-    """يولد كود تفعيل ثابت لكل جهاز بناءً على UUID الخاص بالجهاز"""
-    device_id = os.popen("wmic csproduct get UUID").read().strip().split("\n")[-1]  # الحصول على UUID الجهاز
-    key = hashlib.sha256(device_id.encode()).hexdigest().upper()  # تشفير UUID وإنتاج كود ثابت
-    return key[:]  # اختيار أول 16 حرف فقط (يمكن تغييره حسب الحاجة)
+    """Generates a fixed activation code for each device based on the device's UUID"""
+    device_id = os.popen("wmic csproduct get UUID").read().strip().split("\n")[-1]  # Get the device UUID
+    key = hashlib.sha256(device_id.encode()).hexdigest().upper()  # Encrypt the UUID and produce a fixed code
+    return key[:]  # Select the first 16 characters only (can be changed as needed)
 
 activation_key = generate_activation_key()
 print(f"Activation Key: {activation_key}")
 
-def is_activated():
-    """يتحقق مما إذا كان الجهاز مفعّل عبر الريجستري"""
-    try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, REGISTRY_PATH, 0, winreg.KEY_READ) as key:
-            value, _ = winreg.QueryValueEx(key, REGISTRY_KEY)
-            return value == "1"
-    except FileNotFoundError:
-        return False
-
-def set_activated():
-    """يحفظ حالة التفعيل في الريجستري"""
-    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, REGISTRY_PATH) as key:
-        winreg.SetValueEx(key, REGISTRY_KEY, 0, winreg.REG_SZ, "1")
-
 def activate():
-    """يفحص إذا كان الجهاز مفعّل أم لا"""
-    if is_activated():
-        print("✅ الأداة مفعّلة بالفعل!")
-        return
-
-    # activation_key = generate_activation_key()
-    # print(f"🔑 كود التفعيل الخاص بجهازك: {activation_key}")
-    input("🔹 أرسل الكود للمسؤول، واضغط Enter بعد الحصول على التفعيل...")
-
     response = requests.post(SERVER_URL, json={"key": activation_key}).json()
 
     if response["status"] == "success":
-        print("✅ تم التفعيل بنجاح!")
-        set_activated()
+        print("")
+        
     else:
-        print("❌ كود التفعيل غير صالح. حاول مرة أخرى!")
+       input("🔹 Send the code to the administrator, and press Enter after receiving the activation...")
+ 
 
-if __name__ == "__main__":
+if __name__ == "_main_":
     activate()
