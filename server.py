@@ -67,6 +67,8 @@ def add_code():
 @app.route("/verify", methods=["POST"])
 def verify_key():
 
+    version = "1.0"
+
     try:
         data = request.get_json()
 
@@ -76,15 +78,26 @@ def verify_key():
                 "message": "❌ لم يتم إرسال بيانات صحيحة!"
             }), 400
 
+        tool_version = data.get("tool_version")
         key = data.get("key")
         codes = load_codes()
         verify_key = str(codes).replace("'", '')
 
+        print(version)
+        print(tool_version)
+
+
         if key in verify_key:
-            return jsonify({
-                "status": "success",
-                "message": "✅ التفعيل ناجح!"
-            }), 200
+            if tool_version == version:
+               return jsonify({
+                   "status": "success",
+                   "message": "✅ التفعيل ناجح!"
+               }), 200
+            else:
+                return jsonify({
+                    "status": "not",
+                    "message": "❌ التفعيل فشل!"
+                }), 405
         else:
             return jsonify({
                 "status": "error",
