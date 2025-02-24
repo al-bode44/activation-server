@@ -3,17 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختبار Deep Link</title>
+    <title>جاري نقل التوكن...</title>
+    <script>
+        window.onload = function() {
+            // استخراج التوكن من الـ URL
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get("token");
+
+            if (token) {
+                // تشغيل التطبيق عبر الديب لينك
+                var deepLink = "myapp://callback?token=" + encodeURIComponent(token);
+                window.location.href = deepLink;
+
+                // عرض رسالة تأكيد
+                document.body.innerHTML = "<h2>✅ تم إرسال التوكن إلى التطبيق!</h2>";
+            } else {
+                document.body.innerHTML = "<h2>❌ لم يتم العثور على التوكن!</h2>";
+            }
+        };
+    </script>
 </head>
 <body>
-    <h2>اضغط لفتح التطبيق مع التوكن</h2>
-    <a href="myapp://callback?token=XYZ">اضغط هنا لاختبار استقبال التوكن</a>
-
-    <script>
-        // فتح الرابط تلقائيًا بعد تحميل الصفحة
-        setTimeout(function() {
-            window.location.href = "myapp://callback?token=XYZ";
-        }, 1000);
-    </script>
+    <h2>🔄 جاري معالجة التوكن...</h2>
 </body>
 </html>
