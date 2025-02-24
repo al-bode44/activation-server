@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار Deep Link</title>
+</head>
+<body>
+    <h2>اضغط لفتح التطبيق مع التوكن</h2>
+    <a href="myapp://callback?token=XYZ">اضغط هنا لاختبار استقبال التوكن</a>
+
+    <script>
+        // فتح الرابط تلقائيًا بعد تحميل الصفحة
+        setTimeout(function() {
+            window.location.href = "myapp://callback?token=XYZ";
+        }, 1000);
+    </script>
+</body>
+</html>

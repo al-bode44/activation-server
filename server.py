@@ -1,9 +1,5 @@
 import traceback
-# import requests
-# import time
-# from threading import Thread
-# from flask import Flask
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 app = Flask(__name__)
 
 
@@ -116,6 +112,11 @@ def verify_key():
 @app.route('/')
 def keep():
     return "Server is alive!", 200
+
+@app.route('/get-token')
+def serve_page():
+    return send_from_directory('.', 'get-token.html')
+
 
 
 if __name__ == "__main__":
