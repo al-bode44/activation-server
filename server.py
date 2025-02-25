@@ -187,6 +187,38 @@ def store_token():
 
     return jsonify({"message": "New file created and token stored"}), 201
 
+
+@app.route('/count_tokens', methods=['POST'])
+def count_tokens():
+    try:
+        data = request.get_json()
+        activation_code = data.get("activation_code")
+
+        if not activation_code:
+            return jsonify({"error": "Activation code is required"}), 400
+
+        phone_number = get_phone_number(activation_code)  # احصل على رقم الهاتف المرتبط بالكود
+        if not phone_number:
+            return jsonify({"error": "Phone number not found for this activation code"}), 404
+
+        file_path = os.path.join(FOLDER_PATH, f"{phone_number}.txt")
+
+        if not os.path.exists(file_path):
+            return jsonify({"error": "Token file not found"}), 404
+
+        with open(file_path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+
+        if not lines or lines[0].strip() != activation_code:
+            return jsonify({"error": "Activation code does not match file"}), 400
+
+        token_count = len(lines) - 1  # حساب عدد الأسطر ناقص السطر الأول
+
+        return jsonify({"activation_code": activation_code, "token_count": token_count}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
 @app.route('/')
 def keep():
     return "Server is alive!", 200
