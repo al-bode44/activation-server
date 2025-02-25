@@ -163,6 +163,11 @@ def verify_key():
 
 @app.route('/store_token', methods=['POST'])
 def store_token():
+    
+    # Ensure the folder exists
+    if not os.path.exists(FOLDER_PATH):
+        os.makedirs(FOLDER_PATH)
+    
     data = request.json
     activation_code = data.get("activation_code")
     token = data.get("token")
