@@ -119,7 +119,7 @@ def add_code():
 
 @app.route("/verify", methods=["POST"])
 def verify_key():
-    version = "1.2"
+    version = "1.1"
 
     try:
         data = request.get_json()
