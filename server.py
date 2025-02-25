@@ -218,6 +218,31 @@ def count_tokens():
 
     except Exception as e:
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+    
+
+@app.route('/get_files_info', methods=['GET'])
+def get_files_info():
+    if not os.path.exists(FOLDER_PATH):
+        return jsonify({"error": "Tokens folder not found"}), 404
+
+    files_info = {}
+    total_lines = 0
+
+    for filename in os.listdir(FOLDER_PATH):
+        file_path = os.path.join(FOLDER_PATH, filename)
+
+        if os.path.isfile(file_path):  # تأكد أنه ملف وليس مجلد
+            with open(file_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+            if lines:  # تأكد أن الملف غير فارغ
+                activation_code = lines[0].strip()  # أول سطر (كود التفعيل)
+                lines_count = len(lines) - 1  # عدد الأسطر بدون سطر التفعيل
+                files_info[filename] = {"activation_code": activation_code, "lines_count": lines_count}
+                total_lines += lines_count
+
+    return jsonify({"files": files_info, "total_lines": total_lines})
+
 
 @app.route('/')
 def keep():
