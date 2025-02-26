@@ -102,7 +102,7 @@ def add_code():
                 "message": "Code already exists"
             }), 400
 
-        save_code(new_code, phone)  # Save code with phone in file
+        save_code(new_code, phone) 
 
         return jsonify({
             "status": "success",
