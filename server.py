@@ -1,9 +1,12 @@
+import json
 import shutil
 import os
 import tempfile
 import datetime
+import time
 import traceback
-from flask import Flask, send_file, request, jsonify, send_from_directory
+from flask import Flask, Response, send_file, request, jsonify, send_from_directory
+import requests
 
 app = Flask(__name__)
 
@@ -247,6 +250,51 @@ def get_files_info():
                 total_lines += lines_count
 
     return jsonify({"files": files_info, "total_lines": total_lines})
+
+
+# ✅ دالة فحص التوكن
+def check_token_status(token):
+    headers = {"Authorization": token, "Content-Type": "application/json"}
+
+    # ✅ تحقق من `/users/@me`
+    user_response = requests.get("https://discord.com/api/v10/users/@me", headers=headers)
+    if user_response.status_code == 401:
+        return "Invalid"  # ❌ التوكن تالف
+
+    # ✅ اختبار الانضمام إلى سيرفر (Locked)
+    join_response = requests.post(f"https://discord.com/api/v10/invites/7fFdRV3t", headers=headers)
+    if join_response.status_code in [401, 403]:  # Forbidden
+        return "Locked"  # 🔒 التوكن مقفول
+    
+    return "Work"  # ✅ التوكن صالح
+
+# ✅ بث مباشر للإحصائيات (SSE)
+@app.route("/check_tokens", methods=["GET"])
+def check_tokens():
+    file_name = request.args.get("file_name")
+    file_path = os.path.join(FOLDER_PATH, file_name)
+
+    if not os.path.exists(file_path):
+        return Response("data: {\"error\": \"❌ الملف غير موجود\"}\n\n", content_type="text/event-stream")
+
+    def generate():
+        with open(file_path, "r", encoding="utf-8") as file:
+            tokens = [line.strip().replace('"', '') for line in file.readlines() if line.strip()]
+
+        if not tokens:
+            yield "data: {\"error\": \"⚠️ الملف فارغ\"}\n\n"
+            return
+        
+        stats = {"Work": 0, "Locked": 0, "Invalid": 0}  # 🔢 عدّاد الحالات
+
+        for token in tokens:
+            status = check_token_status(token)  # ✅ فحص التوكن
+            stats[status] += 1  # ✅ زيادة العدد حسب الحالة
+            yield f"data: {json.dumps(stats)}\n\n"  # 📡 إرسال التحديث الجديد
+            
+            time.sleep(1)  # ⏳ تأخير **1 ثانية بين كل فحص والتاني**
+
+    return Response(generate(), content_type="text/event-stream")
 
 
 @app.route('/')
