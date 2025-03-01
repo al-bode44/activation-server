@@ -296,7 +296,6 @@ def check_tokens():
 
     return Response(generate(), content_type="text/event-stream")
 
-
 @app.route('/')
 def keep():
     return "Server is alive!", 200
