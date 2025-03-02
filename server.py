@@ -78,7 +78,7 @@ def download_folder():
 
     return send_file(zip_path, as_attachment=True, download_name=zip_filename)
 
-@app.route('/add_code', methods=['POST'])
+@app.route('/add_code_v2', methods=['POST'])
 def add_code():
     try:
         data = request.get_json()  # Receive JSON
@@ -122,7 +122,7 @@ def add_code():
 
 @app.route("/verify", methods=["POST"])
 def verify_key():
-    version = "1.1"
+    version = "1.2"
 
     try:
         data = request.get_json()
@@ -275,14 +275,14 @@ def check_tokens():
     file_path = os.path.join(FOLDER_PATH, file_name)
 
     if not os.path.exists(file_path):
-        return Response("data: {\"error\": \"❌ الملف غير موجود\"}\n\n", content_type="text/event-stream")
+        return Response("data: {\"error\": \"File not found\"}\n\n", content_type="text/event-stream")
 
     def generate():
         with open(file_path, "r", encoding="utf-8") as file:
             tokens = [line.strip().replace('"', '') for line in file.readlines() if line.strip()]
 
         if not tokens:
-            yield "data: {\"error\": \"⚠️ الملف فارغ\"}\n\n"
+            yield "data: {\"error\": \"File is empty\"}\n\n"
             return
         
         stats = {"Work": 0, "Locked": 0, "Invalid": 0}  # 🔢 عدّاد الحالات
