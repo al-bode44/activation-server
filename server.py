@@ -16,6 +16,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Folder that contains the files
 FOLDER_PATH = "Tokens_Files"
 CODES_FILE = "codes.txt"  # File storing activation codes with phone numbers
+ADMIN_CODES_FILE = "admin_codes.txt"  # File storing activation codes with phone numbers
+manger_CODES_FILE = "manger_codes.txt"  # File storing activation codes with phone numbers
 
 # Ensure the folder exists
 if not os.path.exists(FOLDER_PATH):
@@ -43,11 +45,91 @@ def load_codes():
         return codes
     except FileNotFoundError:
         return {}  # Return empty dict if file not found
+    
+def load_admin_codes():
+    try:
+        admin_codes = {}
+        with open(ADMIN_CODES_FILE, "r", encoding="utf-8") as file:
+            for line in file:
+                parts = line.strip().split(",")  # تقسيم السطر إلى أجزاء
+                if len(parts) == 3:  # يجب أن يحتوي كل سطر على (كود، هاتف، حالة)
+                    code, phone, status = parts
+                    admin_codes[code] = {"phone": phone, "status": status.lower() == "true"}  
+        return admin_codes
+    except FileNotFoundError:
+        return {} 
+
+def save_all_codes(codes):
+    with open(CODES_FILE, "w", encoding="utf-8") as file:
+        for code, phone in codes.items():
+            file.write(f"{code},{phone}\n")
+
+def save_all_admin_codes(admin_codes):
+    with open(ADMIN_CODES_FILE, "w", encoding="utf-8") as file:
+        for code, details in admin_codes.items():
+            file.write(f"{code},{details['phone']},{details['status']}\n")
+
+
+
+def update_code(old_code, new_phone):
+    codes = load_codes()
+    
+    if old_code not in codes:
+        return {"status": "error", "message": "Code not found"}
+    
+    # تعديل البيانات
+    del codes[old_code]
+    codes[old_code] = new_phone
+    
+    save_all_codes(codes)
+    return {"status": "success", "message": "Code updated successfully"}
+
+def update_admin_code(old_code, new_phone, new_status):
+    admin_codes = load_admin_codes()
+    
+    if old_code not in admin_codes:
+        return {"status": "error", "message": "Code not found"}
+    
+    # حذف الكود القديم
+    del admin_codes[old_code]
+    
+    # تحديث البيانات بالقيم الجديدة
+    admin_codes[old_code] = {"phone": new_phone, "status": new_status}
+    
+    save_all_admin_codes(admin_codes)
+    return {"status": "success", "message": "Code updated successfully"}
+
+
+def delete_code(code):
+    codes = load_codes()
+    
+    if code not in codes:
+        return {"status": "error", "message": "Code not found"}
+    
+    del codes[code]
+    save_all_codes(codes)
+    
+    return {"status": "success", "message": "Code deleted successfully"}
+
+def delete_admin_code(code):
+    admin_codes = load_admin_codes()
+    
+    if code not in admin_codes:
+        return {"status": "error", "message": "Code not found"}
+    
+    del admin_codes[code]
+    save_all_admin_codes(admin_codes)
+    
+    return {"status": "success", "message": "Code deleted successfully"}
 
 # Function to save codes in a text file
 def save_code(new_code, phone):
     with open(CODES_FILE, "a") as file:  # Use append instead of full rewrite
         file.write(new_code + "," + phone + "\n")
+
+def save_admin_code(new_code, phone, status):
+    with open(ADMIN_CODES_FILE, "a", encoding="utf-8") as file:  # Append بدلًا من إعادة الكتابة
+        file.write(f"{new_code},{phone},{status}\n")
 
 @app.route('/download_folder', methods=['GET'])
 def download_folder():
@@ -120,6 +202,117 @@ def add_code():
             "message": "Internal Server Error"
         }), 500
 
+@app.route('/update_code', methods=['POST'])
+def update_code_api():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+
+        old_code = data.get("old_code")
+        new_phone = data.get("new_phone")
+
+        if not old_code or not new_phone:
+            return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+        result = update_code(old_code, new_phone)
+        return jsonify(result), 200 if result["status"] == "success" else 400
+
+    except Exception as e:
+        print("❌ Server error:", e)
+        return jsonify({"status": "error", "message": "Internal Server Error"}), 500
+
+
+@app.route('/update_admin_code', methods=['POST'])
+def update_admin_code_api():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+
+        old_code = data.get("old_code")
+        new_phone = data.get("new_phone")
+        new_status = data.get("new_status")  # ✅ استلام قيمة status
+
+        if not old_code or not new_phone or new_status is None:
+            return jsonify({"status": "error", "message": "Missing parameters"}), 400
+
+        result = update_admin_code(old_code, new_phone, new_status)  # ✅ تمرير status
+
+        return jsonify(result), 200 if result["status"] == "success" else 400
+
+    except Exception as e:
+        print("❌ Server error:", e)
+        return jsonify({"status": "error", "message": "Internal Server Error"}), 500
+
+
+@app.route('/delete_code', methods=['POST'])
+def delete_code_api():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+
+        code = data.get("code")
+        if not code:
+            return jsonify({"status": "error", "message": "Code is required"}), 400
+
+        result = delete_code(code)
+        return jsonify(result), 200 if result["status"] == "success" else 400
+
+    except Exception as e:
+        print("❌ Server error:", e)
+        return jsonify({"status": "error", "message": "Internal Server Error"}), 500
+
+
+@app.route('/delete_admin_code', methods=['POST'])
+def delete_admin_code_api():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+
+        admin_code = data.get("code")
+        if not admin_code:
+            return jsonify({"status": "error", "message": "Code is required"}), 400
+
+        result = delete_admin_code(admin_code)
+        return jsonify(result), 200 if result["status"] == "success" else 400
+
+    except Exception as e:
+        print("❌ Server error:", e)
+        return jsonify({"status": "error", "message": "Internal Server Error"}), 500
+
+
+@app.route('/add_admin_code', methods=['POST'])
+def add_admin_code():
+    try:
+        data = request.get_json()  # استقبال JSON
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+
+        new_code = data.get("code")
+        phone = data.get("phone")
+        status = data.get("status")  # استقبال الحالة
+
+        if not new_code or not phone or status not in ["true", "false"]:
+            return jsonify({"status": "error", "message": "Code, phone, and status (true/false) are required"}), 400
+
+        admin_codes = load_admin_codes()
+
+        if new_code in admin_codes:
+            return jsonify({"status": "error", "message": "Code already exists"}), 400
+
+        save_admin_code(new_code, phone, status)
+
+        return jsonify({"status": "success", "message": "Code added successfully"}), 200
+
+    except Exception as e:
+        print("❌ Server error:", e)
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": "Internal Server Error"}), 500
+
+
 @app.route("/verify", methods=["POST"])
 def verify_key():
     version = "1.2"
@@ -164,6 +357,52 @@ def verify_key():
             "message": "Internal Server Error"
         }), 500
 
+
+@app.route("/verify_admin", methods=["POST"])
+def verify_admin_key():
+    version = "1.0"
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                "status": "error",
+                "message": "❌ Invalid data received!"
+            }), 400
+
+        tool_version = data.get("tool_version")
+        key = data.get("key")
+        admin_codes = load_admin_codes()
+
+        if key in admin_codes:
+            phone_number = admin_codes[key]["phone"]  # رقم الهاتف المرتبط بالكود
+            is_active = admin_codes[key]["status"]   # حالة التفعيل (True/False)
+
+            if tool_version == version:
+                return jsonify({
+                    "status": "success",
+                    "message": "✅ Activation successful!",
+                    "phone": phone_number,  # إرجاع رقم الهاتف
+                    "activation_status": is_active  # إرجاع الحالة (True/False)
+                }), 200
+            else:
+                return jsonify({
+                    "status": "not",
+                    "message": "❌ Activation failed! Incorrect tool version."
+                }), 405
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "❌ Invalid activation code!"
+            }), 400
+
+    except Exception as e:
+        print("❌ Server error:", e)
+        traceback.print_exc()
+        return jsonify({
+            "status": "error",
+            "message": "Internal Server Error"
+        }), 500
 @app.route('/store_token', methods=['POST'])
 def store_token():
     
