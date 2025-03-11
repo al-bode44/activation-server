@@ -634,7 +634,7 @@ def verify_admin_key():
             return jsonify({
                 "status": "error",
                 "message": "❌ Invalid activation code!"
-            }), 400
+            }), 401
 
     except Exception as e:
         print("❌ Server error:", e)
