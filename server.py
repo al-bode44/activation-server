@@ -622,7 +622,7 @@ def verify_admin_key():
                     "message": "✅ Activation successful!",
                     "phone": phone_number,  # إرجاع رقم الهاتف
                     "activation_status": is_active,  # إرجاع الحالة (True/False)
-                    "Discord_status": Discord_status
+                    "Discord_status": Discord_status,
                     **pending_files_status  # تضمين حالة الملفات الثلاثة
                 }), 200
             else:
